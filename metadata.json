@@ -1,0 +1,8 @@
+{
+  "name": "행정실 업무지원 캘린터",
+  "description": "2026년 행정달력 단일 파일 웹 애플리케이션 - 월별 및 연간 일정, 검색·필터링, 마감일 하이라이트 및 인쇄·다운로드 지원",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
