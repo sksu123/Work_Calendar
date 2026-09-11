@@ -52,26 +52,111 @@
       background-color: #cbd5e1;
       border-radius: 9999px;
     }
-    /* Print Optimizations */
+    /* Print Optimizations (A4 단일 페이지 인쇄 최적화) */
+    @page {
+      size: A4 landscape;
+      margin: 4mm 6mm 4mm 6mm;
+    }
     @media print {
+      html, body {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 7.5pt !important;
+        line-height: 1.15 !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      *, *:before, *:after {
+        box-sizing: border-box !important;
+      }
       .no-print {
         display: none !important;
       }
-      body {
-        background: #ffffff !important;
-        color: #000000 !important;
-        font-size: 11pt;
+      main {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
-      .print-shadow-none {
+      #view-month {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 180mm !important;
+        max-height: 180mm !important;
+        border: 1.5px solid #475569 !important;
+        border-radius: 4px !important;
         box-shadow: none !important;
-        border: 1px solid #e2e8f0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
       }
-      .page-break {
-        page-break-before: always;
+      #view-month > div:first-child {
+        display: grid !important;
+        grid-template-columns: repeat(7, 1fr) !important;
+        padding: 2.5px 0 !important;
+        font-size: 7.5pt !important;
+        font-weight: 700 !important;
+        background-color: #f1f5f9 !important;
+        border-bottom: 1.5px solid #475569 !important;
+        flex-shrink: 0 !important;
+      }
+      #calendar-grid {
+        flex: 1 1 auto !important;
+        display: grid !important;
+        grid-template-columns: repeat(7, 1fr) !important;
+        grid-auto-rows: 1fr !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        background-color: #cbd5e1 !important;
+        gap: 1px !important;
+        border: none !important;
+        overflow: hidden !important;
       }
       .calendar-day-cell {
-        min-height: 90px !important;
-        height: auto !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        padding: 2px 3px !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        background-color: #ffffff !important;
+        font-size: 7pt !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .calendar-day-cell button {
+        display: none !important;
+      }
+      .calendar-day-cell .space-y-0\.5 > * + * {
+        margin-top: 1px !important;
+      }
+      .calendar-day-cell .group\/item {
+        padding: 0.5px 2px !important;
+        margin-bottom: 0.5px !important;
+        font-size: 6.8pt !important;
+        line-height: 1.15 !important;
+        border-width: 0.5px !important;
+        border-radius: 2px !important;
+        box-shadow: none !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+      .calendar-day-cell .group\/item span {
+        font-size: 6.8pt !important;
       }
     }
   </style>
@@ -118,7 +203,7 @@
             <span class="hidden md:inline">엑셀 다운로드</span>
           </button>
 
-          <button onclick="window.print()" class="px-3 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-1.5" title="인쇄하기">
+          <button onclick="handlePrint()" class="px-3 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-1.5" title="A4 가로 1장 인쇄하기">
             <i class="fa-solid fa-print"></i>
             <span class="hidden md:inline">인쇄</span>
           </button>
@@ -127,10 +212,17 @@
     </div>
   </header>
 
-  <!-- Print Header Only -->
-  <div class="hidden print:block p-4 border-b border-slate-300 mb-4 text-center">
-    <h1 class="text-2xl font-bold text-slate-900">2026년 교행 캘린더</h1>
-    <p class="text-sm text-slate-600 mt-1" id="print-subtitle">2026년 행정실 업무 주요 일정표</p>
+  <!-- Print Header Only (A4 1장 출력용 초슬림 헤더) -->
+  <div class="hidden print:flex items-center justify-between border-b-2 border-slate-700 pb-1 mb-1 text-left" id="print-header-container">
+    <div class="flex items-baseline gap-2.5">
+      <h1 class="text-sm font-black text-slate-900 tracking-tight" id="print-title">2026년 9월 교행 캘린더</h1>
+      <span class="text-[10px] font-semibold text-slate-600" id="print-subtitle">교육행정실 주요 학사·행정 일정표</span>
+    </div>
+    <div class="text-[8.5px] text-slate-500 text-right font-medium flex items-center gap-2">
+      <span>전라남도교육청 학교행정실 업무 HUB</span>
+      <span class="text-slate-300">|</span>
+      <span id="print-meta-date">출력일: 2026.09.10</span>
+    </div>
   </div>
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-3.5">
@@ -4340,11 +4432,24 @@
         headerYearText.textContent = `${state.year} 행정달력`;
       }
 
+      const printTitle = document.getElementById('print-title');
+      if (printTitle) {
+        printTitle.textContent = state.viewMode === 'year' 
+          ? `${state.year}년 연간 교행 캘린더` 
+          : `${state.year}년 ${state.month}월 교행 캘린더`;
+      }
+
       const printSubtitle = document.getElementById('print-subtitle');
       if (printSubtitle) {
         printSubtitle.textContent = state.viewMode === 'year' 
-          ? `${state.year}년도 연간 행정 업무 총괄 일정표` 
-          : `${state.year}년 ${state.month}월 교육행정실 주요 업무 일정표`;
+          ? `연간 교육행정실 주요 학사·행정 업무 총괄 일정표` 
+          : `교육행정실 주요 학사·행정 업무 일정표`;
+      }
+
+      const printMetaDate = document.getElementById('print-meta-date');
+      if (printMetaDate) {
+        const today = new Date();
+        printMetaDate.textContent = `출력일: ${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
       }
 
       const yearOverviewTitle = document.getElementById('year-overview-title');
@@ -4581,12 +4686,15 @@
                 <button 
                   type="button"
                   onclick="event.stopPropagation(); showMoreEventsModal('${dateStr}')"
-                  class="w-full py-0.5 px-1 text-[10px] font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 active:bg-sky-200 rounded border border-sky-200 cursor-pointer flex items-center justify-center gap-1 transition shadow-2xs"
+                  class="w-full py-0.5 px-1 text-[10px] font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 active:bg-sky-200 rounded border border-sky-200 cursor-pointer flex items-center justify-center gap-1 transition shadow-2xs no-print"
                   title="${dateStr} 전체 일정 ${dayEvents.length}개 모두 보기"
                 >
                   <i class="fa-solid fa-list-ul text-[9px]"></i>
                   <span>+${dayEvents.length - 3}개 더보기 (총 ${dayEvents.length}건)</span>
                 </button>
+                <div class="hidden print:block text-[6.5pt] text-slate-500 font-bold text-right leading-none mt-0.5">
+                  +외 ${dayEvents.length - 3}건
+                </div>
               </div>
             ` : ''}
           </div>
@@ -4782,6 +4890,18 @@
     /* ==========================================================================
        5. 상호작용 및 이벤트 처리 함수
        ========================================================================= */
+    function handlePrint() {
+      // 월간 달력이 단일 A4 1장에 최적화되어 있으므로, 연간이나 목록 뷰일 경우 월간 뷰로 전환 후 인쇄
+      if (state.viewMode !== 'month') {
+        setViewMode('month');
+        setTimeout(() => {
+          window.print();
+        }, 100);
+      } else {
+        window.print();
+      }
+    }
+
     function changeMonth(delta) {
       if (state.viewMode === 'year') {
         state.viewMode = 'month';
