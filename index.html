@@ -212,10 +212,29 @@
             <i class="fa-solid fa-book-open"></i>
             <span class="hidden md:inline">설명서</span>
           </button>
+
+          <!-- Header Hide Button -->
+          <button onclick="toggleHeaderCollapse(true)" class="px-2.5 py-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white rounded-lg transition-colors flex items-center gap-1.5 border border-white/20 shadow-sm" title="상단 헤더 숨기기 (달력 넓게 보기)">
+            <i class="fa-solid fa-chevron-up text-xs"></i>
+            <span class="hidden sm:inline text-[11px]">헤더 숨기기</span>
+          </button>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- Floating Header Restore Button (헤더 숨김 시 상단 중앙에 나타남) -->
+  <div id="restore-header-bar" class="hidden fixed top-0 left-1/2 -translate-x-1/2 z-40 no-print animate-in fade-in slide-in-from-top-2 duration-200">
+    <button 
+      type="button" 
+      onclick="toggleHeaderCollapse(false)" 
+      class="bg-jbe-800/95 hover:bg-jbe-900 text-sky-200 hover:text-white px-3.5 py-1.5 rounded-b-xl border-x border-b border-white/20 shadow-lg text-xs font-semibold flex items-center justify-center transition-all hover:pt-2 cursor-pointer backdrop-blur group" 
+      title="상단 헤더 다시 보이기"
+      aria-label="상단 헤더 다시 보이기"
+    >
+      <i class="fa-solid fa-chevron-down text-sky-300 group-hover:text-white text-xs transition-colors"></i>
+    </button>
+  </div>
 
   <!-- Print Header Only (A4 1장 출력용 초슬림 헤더) -->
   <div class="hidden print:flex items-center justify-between border-b-2 border-slate-700 pb-1 mb-1 text-left" id="print-header-container">
@@ -6593,6 +6612,31 @@
       }
     }
 
+    /* ==========================================================================
+       헤더 접기/펼치기 (숨기기 / 다시 보이기) 토글 기능
+       ========================================================================== */
+    function toggleHeaderCollapse(hide, showToastMsg = true) {
+      const header = document.getElementById('app-header');
+      const restoreBar = document.getElementById('restore-header-bar');
+      if (!header || !restoreBar) return;
+
+      if (hide) {
+        header.classList.add('hidden');
+        restoreBar.classList.remove('hidden');
+        localStorage.setItem('jbe_header_hidden', 'true');
+        if (showToastMsg) {
+          showToast("상단 헤더를 숨겼습니다. 상단 중앙의 화살표(⌄) 단추로 다시 열 수 있습니다.", "info");
+        }
+      } else {
+        header.classList.remove('hidden');
+        restoreBar.classList.add('hidden');
+        localStorage.setItem('jbe_header_hidden', 'false');
+        if (showToastMsg) {
+          showToast("상단 헤더를 다시 표시했습니다.", "info");
+        }
+      }
+    }
+
     // 키보드 단축키 (ESC 모달 닫기, 좌우 방향키 월 이동)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -6612,6 +6656,12 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadCustomEvents();
       renderApp();
+
+      // 저장된 상단 헤더 숨김 상태 복원
+      const isHeaderHidden = localStorage.getItem('jbe_header_hidden') === 'true';
+      if (isHeaderHidden) {
+        toggleHeaderCollapse(true, false);
+      }
 
       // 브라우저를 켜둔 상태에서 자정이 지나 대한민국 오늘 날짜가 바뀔 때 달력 자동 갱신
       let lastCheckedDate = getKoreanToday().dateStr;
